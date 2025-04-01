@@ -1,0 +1,90 @@
+Data Types: INTEGER,TEXT,BLOB,REAL
+Indexing and querying: creating indexing on columns can significantly speed up queries. 
+Transaction Management: fully ACID compliant, ensure that all transactions are
+A: Atomic, C: Consistent , I: Isolated, D: Durable.   	
+
+
+
+sqlite3 addressbook.db  >> Creating addressbook database
+
+CREATE TABLE AddressBook(
+ ID INTEGER PRIMARY KEY,
+ Name TEXT NOT NULL,
+ Address TEXT NOT NULL
+);
+
+INSERT INTO AddressBook (Name,Address) VALUES ('Alice','Address of Alice');
+SELECT * FROM AddressBook WHERE Name='Alice';
+UPDATE AddressBook SET Address='Update of address of Alice' WHERE Name='Alice';
+DELETE FROM AddressBook WHERE Name='Alice';
+
+
+
+CREATE TABLE IF NOT EXISTS users (
+	id INTEGER PRIMARY KEY, 
+	name TEXT, 
+	age INTEGER, 
+	department_id INTEGER
+);
+        
+CREATE TABLE IF NOT EXISTS departments (
+	id INTEGER PRIMARY KEY, 
+	name TEXT
+);
+        
+CREATE TABLE IF NOT EXISTS orders (
+	id INTEGER PRIMARY KEY,
+	user_id INTEGER,
+	amount REAL,
+	order_date TEXT
+);
+INSERT INTO users (name, age, department_id) VALUES 
+('Alice', 25, 1),('Bob', 30, 2),('Charlie', 22, 1);
+INSERT INTO departments (name) VALUES 
+('HR'),('Engineering');
+INSERT INTO orders (user_id, amount, order_date) VALUES 
+(1, 100.50, '2023-01-15'), (1, 200.75, '2023-02-20'), (2, 50.25, '2023-01-10') ;
+    
+SELECT name, age FROM users WHERE age > 25;
+
+SELECT department_id, COUNT(*) as user_count, AVG(age) as avg_age
+FROM users GROUP BY department_id;
+
+SELECT u.name, d.name as department
+FROM users u INNER JOIN departments d 
+ON u.department_id = d.id;
+
+SELECT d.name AS department, u.name AS user 
+FROM departments d LEFT JOIN users u 
+ON d.id = u.department_id
+ORDER BY d.name ;
+
+	SELECT u.name AS user, d.name AS department 
+	FROM users u
+	LEFT JOIN departments d ON u.department_id = d.id
+UNION
+	SELECT u.name AS user, d.name AS department
+	FROM departments d 
+	LEFT JOIN users u ON d.id = u.department_id
+	WHERE u.id IS NULL;
+	                 
+	SELECT name FROM users
+UNION  
+	SELECT name FROM departments
+ORDER BY name; 
+
+UNION: Removes duplicates UNION ALL: Keeps duplicates
+- All queries in the union must have the same number of columns.
+- Column names are taken from the first query.
+- Use ORDER BY at the end to sort the combined result.
+
+SELECT 'user' AS type, name FROM users WHERE name LIKE '%A%' 
+UNION 
+SELECT 'department' AS type, name FROM departments WHERE name LIKE '%A%' OR name LIKE '%E%';
+    
+SELECT name, age FROM users WHERE age > 25 OR name LIKE 'J_n%' ;  // _ wildCard , Jone,Jane,Jena
+
+	        
+    
+    
+

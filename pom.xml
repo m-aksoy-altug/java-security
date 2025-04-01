@@ -9,7 +9,12 @@
     <maven.compiler.target>21</maven.compiler.target>
     </properties>
   <dependencies> 
-   <dependency>
+	<dependency>
+	    <groupId>org.xerial</groupId>
+	    <artifactId>sqlite-jdbc</artifactId>
+	    <version>3.49.1.0</version>
+	</dependency>
+	<dependency>
 	    <groupId>org.apache.logging.log4j</groupId>
 	    <artifactId>log4j-slf4j2-impl</artifactId>
 	    <version>2.23.1</version> 

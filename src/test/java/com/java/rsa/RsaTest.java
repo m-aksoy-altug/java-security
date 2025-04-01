@@ -51,13 +51,6 @@ public class RsaTest {
 	
 	private static final Logger log = LoggerFactory.getLogger(RsaTest.class);
 	
-	/* TODO
-	 * - Assumption that keyExchange and authentication are completed in TLS
-	 * -  key exchange: Establish a shared secret (ECDHE, RSA)
-	 * -  authentication (RSA-PSS, ECDSA)
-	 * data encryption/decryption  
-	 * symmetric ciphers (e.g., AES, ChaCha20)
-	*/
 	@BeforeAll
 	public static void writePublicAndPrivateKeys() throws NoSuchAlgorithmException, NoSuchProviderException {
 		Security.addProvider(new BouncyCastleProvider());
