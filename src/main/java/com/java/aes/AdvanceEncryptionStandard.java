@@ -104,6 +104,10 @@ public class AdvanceEncryptionStandard {
 		outputStream.close();
 	}
 	
+	/*
+	 * The SealedObject class in Java provides a way to encrypt and securely store a serializable object using a Cipher.
+	 * It ensures that the object remains encrypted while stored or transmitted, and it can only be decrypted with the correct key.
+	*/
 	public static SealedObject encryptObject(String algorithm, Serializable object,
 		    								SecretKey key, GCMParameterSpec iv) throws Exception {
 		    Cipher cipher = Cipher.getInstance(algorithm);

@@ -216,7 +216,7 @@ public class AdvanceEncryptionStandardTest {
 	    					algorithm, dummyObject, key, gcmParameterSpec);
 	    DummyClass object = (DummyClass) AdvanceEncryptionStandard.decryptObject(
 	    				algorithm, sealedObject, key, gcmParameterSpec);
-	    // DummyClass implemented with POJO (Plain Old Java Object) by override equals and hash methods.   
+	    // DummyClass implemented with POJO (Plain Old Java Object), override equals and hash methods.   
 	    assertEquals(dummyObject, object, "Dummy objects should be equal field by field.");
 	}
 
