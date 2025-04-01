@@ -25,6 +25,7 @@ import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.java.pojo.DummyClass;
 import com.java.utils.Utils;
 
 
@@ -204,7 +206,23 @@ public class AdvanceEncryptionStandardTest {
 //	    decryptedFile.deleteOnExit();
 	}
 	
+	@Test
+	void objectEncryptionAndDecrpytion() throws Exception{
+		DummyClass dummyObject = new DummyClass("dummy name", 34);
+		SecretKey key = AdvanceEncryptionStandard.generateKey(128);
+	    GCMParameterSpec gcmParameterSpec = AdvanceEncryptionStandard.generateIv();
+	    String algorithm = "AES/GCM/NoPadding";
+	    SealedObject sealedObject = AdvanceEncryptionStandard.encryptObject(
+	    					algorithm, dummyObject, key, gcmParameterSpec);
+	    DummyClass object = (DummyClass) AdvanceEncryptionStandard.decryptObject(
+	    				algorithm, sealedObject, key, gcmParameterSpec);
+	    // DummyClass implemented with POJO (Plain Old Java Object) by override equals and hash methods.   
+	    assertEquals(dummyObject, object, "Dummy objects should be equal field by field.");
+	}
+
 }
+
+
 /* 
 * Key Exchange:
 * 1) Client generates a random AES-256 key. 
