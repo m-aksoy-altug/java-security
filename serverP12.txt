@@ -1,0 +1,10 @@
+keytool -genkeypair \
+  -alias servertest \
+  -keyalg RSA \
+  -keysize 2048 \
+  -keystore '/home/altug/Desktop/server.p12' \
+  -storetype PKCS12 \
+  -storepass password \
+  -validity 365 \
+  -dname "CN=localhost" \
+  -ext "SAN=dns:localhost,ip:127.0.0.1,ip:192.168.1.113"
