@@ -98,10 +98,8 @@ public class JavaSecurity {
 		try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 	         PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 	        
-	        // Send welcome message
 	        out.println("Welcome to TLS 1.3 Server! Type 'exit' to disconnect.");
 
-	        // Continuous read/write loop
 	        String clientMessage;
 	        while ((clientMessage = in.readLine()) != null) {
 	        	log.info("Client [" + socket.getRemoteSocketAddress() + "] says: " + clientMessage);
@@ -123,29 +121,5 @@ public class JavaSecurity {
 	        }
 	    }
 	}
-//	 private static void handleClient(SSLSocket socket) {
-//		 try {
-//			 log.info("New client connected: " + socket.getRemoteSocketAddress());
-//	
-//	         InputStream in = socket.getInputStream();
-//	         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-//	         String clientMessage = reader.readLine();
-//	         System.out.println("Client says: " + clientMessage);
-//	         
-//	         // Send response
-//	         OutputStream out = socket.getOutputStream();
-//	         out.write("Hello from TLS 1.3 Server!\n".getBytes(StandardCharsets.UTF_8));
-//	         out.flush();
-//     } catch (IOException e) {
-//    	 log.error("Error handling client: " + e.getMessage());
-//     } finally {
-//         try {
-//             socket.close();
-//         } catch (IOException e) {
-//        	 log.error("Error closing socket: " + e.getMessage());
-//         }
-//     }
-// }
-
 
 }
