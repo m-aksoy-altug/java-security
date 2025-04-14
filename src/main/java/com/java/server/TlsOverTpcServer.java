@@ -11,6 +11,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.concurrent.ExecutorService;
@@ -29,25 +30,24 @@ import javax.net.ssl.SSLSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-
 /* - Protocol: Pure TLS (Transport Layer Security) over TCP (Transmission Control Protocol), layer below HTTP/WebSocket.
  * - Connection Type: Secure Socket Layer - Raw Socket SSLSocket with TLS encryption
  * - Data type: Unstructured binary/plain text  
  * - Use case: IoT, Gaming, financial data stream
 */
 
-public class TlsOverTpc {
-	private static final Logger log = LoggerFactory.getLogger(TlsOverTpc.class);
-	
+public class TlsOverTpcServer {
+	private static final Logger log = LoggerFactory.getLogger(TlsOverTpcServer.class);
+	private static final String PKIX = "PKIX";  // Public Key Infrastructure
 	private static final String KEYSTORE = "server.p12";
 	private static final String KEYSTORE_PASSWORD = "password";
 	private static final String TLSv1_3 = "TLSv1.3";
-	private static final int P8443 = 8443;
+private static final int P8443 = 8443;
 	private static final String TLSv1_2 = "TLSv1.2";
 	private static final int P8444 = 8444;
 	private static final String PKCS12 = "PKCS12";
-
+	private static final String TLS_AES_256_GCM_SHA384 = "TLS_AES_256_GCM_SHA384";
+	
 	/* - TLS version: TLSv1.3
 	 * - Cipher: TLS_AES_256_GCM_SHA384
 	*/
@@ -56,11 +56,11 @@ public class TlsOverTpc {
 			SSLContext sslContext = SSLContext.getInstance(TLSv1_3);
 			KeyStore ks = KeyStore.getInstance(PKCS12);
 			ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASSWORD.toCharArray());
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
 	        kmf.init(ks, KEYSTORE_PASSWORD.toCharArray());
 	        // Disable hostname verification (for testing with self-signed certs)
 	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-	        sslContext.init(kmf.getKeyManagers(), null, null);
+	        sslContext.init(kmf.getKeyManagers(), null,  new SecureRandom());
 	        
 	        SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
 	        SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(P8443,0, 
@@ -69,8 +69,9 @@ public class TlsOverTpc {
 	        log.info("Server started on port " + P8443 + " (TLS 1.3, AES-256-GCM)");
 	        
 	        // Enforce TLS 1.3 and AES-256-GCM
-	        serverSocket.setEnabledProtocols(new String[]{"TLSv1.3"});
-	        serverSocket.setEnabledCipherSuites(new String[]{"TLS_AES_256_GCM_SHA384"});
+	        serverSocket.setEnabledProtocols(new String[]{TLSv1_3});
+	        serverSocket.setEnabledCipherSuites(new String[]{TLS_AES_256_GCM_SHA384});
+	        serverSocket.setNeedClientAuth(false);   // Set to 'true' for mutual TLS
 	        
 	        AtomicInteger clientCounter = new AtomicInteger(0);
 	        while(true) {
@@ -120,7 +121,7 @@ public class TlsOverTpc {
 			SSLContext sslContext = SSLContext.getInstance(TLSv1_2);
 			KeyStore ks = KeyStore.getInstance(PKCS12);
 			ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASSWORD.toCharArray());
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
 	        kmf.init(ks, KEYSTORE_PASSWORD.toCharArray());
 	        // Disable hostname verification (for testing with self-signed certs)
 	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
