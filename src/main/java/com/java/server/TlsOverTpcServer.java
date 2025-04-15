@@ -14,11 +14,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -30,50 +27,29 @@ import javax.net.ssl.SSLSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/* - Protocol: Pure TLS (Transport Layer Security) over TCP (Transmission Control Protocol), layer below HTTP/WebSocket.
- * - Connection Type: Secure Socket Layer - Raw Socket SSLSocket with TLS encryption
- * - Data type: Unstructured binary/plain text  
+import com.java.utils.Constant;
+import com.java.utils.Utils;
+
+/* - Protocol: Pure TLS (Transport Layer Security) over TCP (Transmission Control Protocol), layer below HTTP/WebSocket (OSI Layer 4/5 - Transport/Session Layer).
+ * - Connection Type: Stateful SSL/TLS-secured TCP socket (SSLSocket)
+ * - Data type: Unstructured binary/plain text
+ * - Message Framing: Manual   
  * - Use case: IoT, Gaming, financial data stream
 */
-
 public class TlsOverTpcServer {
 	private static final Logger log = LoggerFactory.getLogger(TlsOverTpcServer.class);
-	private static final String PKIX = "PKIX";  // Public Key Infrastructure
-	private static final String KEYSTORE = "server.p12";
-    //private static final String KEYSTORE_PASSWORD = "password"; passing as System property "keystore.password"
-	private static final String TLSv1_3 = "TLSv1.3";
-	private static final int P8443 = 8443;
-	private static final String TLSv1_2 = "TLSv1.2";
-	private static final int P8444 = 8444;
-	private static final String PKCS12 = "PKCS12";
-	private static final String TLS_AES_256_GCM_SHA384 = "TLS_AES_256_GCM_SHA384";
 	
 	/* - TLS version: TLSv1.3
 	 * - Cipher: TLS_AES_256_GCM_SHA384
 	*/
 	public static void sslServerSocketTLS1Point3OverTCP() {
-		try {
-			String password= getKeyStorePasswordFromSystemProperty();
-	        SSLContext sslContext = SSLContext.getInstance(TLSv1_3);
-			KeyStore ks = KeyStore.getInstance(PKCS12);
-			ks.load(new FileInputStream(KEYSTORE), password.toCharArray());
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
-	        kmf.init(ks, password.toCharArray());
-	        // Disable hostname verification (for testing with self-signed certs)
-	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-	        sslContext.init(kmf.getKeyManagers(), null,  new SecureRandom());
-	        
-	        SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
-	        SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(P8443,0, 
-	        										InetAddress.getByName("0.0.0.0"));
-	        
-	        log.info("Server started on port " + P8443 + " (TLS 1.3, AES-256-GCM)");
-	        
+	        SSLServerSocket serverSocket = Utils.
+	        		createSSLServerSocket(Constant.TLSv1_3,Constant.P8443);
+	        log.info("Server started on port " + Constant.P8443 + " (TLS 1.3, AES-256-GCM)");
 	        // Enforce TLS 1.3 and AES-256-GCM
-	        serverSocket.setEnabledProtocols(new String[]{TLSv1_3});
-	        serverSocket.setEnabledCipherSuites(new String[]{TLS_AES_256_GCM_SHA384});
+	        serverSocket.setEnabledProtocols(new String[]{Constant.TLSv1_3});
+	        serverSocket.setEnabledCipherSuites(new String[]{Constant.TLS_AES_256_GCM_SHA384});
 	        serverSocket.setNeedClientAuth(false);   // true for mutual TLS, client must authenticate by KeyManager and TrustManager
-	        
 	        AtomicInteger clientCounter = new AtomicInteger(0);
 	        while(true) {
 	        	 try {
@@ -97,50 +73,21 @@ public class TlsOverTpcServer {
                	log.error("Server socket error: " + e.getMessage());
                }
 	        }
-	    } catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (UnrecoverableKeyException e) {
-			e.printStackTrace();
-		} catch (KeyManagementException e) {	
-			e.printStackTrace();
-		}
 	}
 		
 	/* - TLS version: TLSv1.2
 	 * - Cipher: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 	*/
 	public static void sslServerSocketTLS1Point2OverTCP() {
-		try {
-			String password= getKeyStorePasswordFromSystemProperty();
-	        SSLContext sslContext = SSLContext.getInstance(TLSv1_2);
-			KeyStore ks = KeyStore.getInstance(PKCS12);
-			ks.load(new FileInputStream(KEYSTORE), password.toCharArray());
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
-	        kmf.init(ks, password.toCharArray());
-	        // Disable hostname verification (for testing with self-signed certs)
-	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-	        sslContext.init(kmf.getKeyManagers(), null,  new SecureRandom());
+	        SSLServerSocket serverSocket = Utils.
+	        		createSSLServerSocket(Constant.TLSv1_2,Constant.P8444);
 	        
-	        SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
-	        SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(P8444,0, 
-	        										InetAddress.getByName("0.0.0.0"));
-	        
-	        log.info("Server started on port " + P8444 + " (TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)");
-	        
+	        log.info("Server started on port " + Constant.P8444 + " (TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)");
 	        // Enforce TLS 1.2 and TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-	        serverSocket.setEnabledProtocols(new String[]{TLSv1_2});
-	        serverSocket.setEnabledCipherSuites(new String[]{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"});
+	        serverSocket.setEnabledProtocols(new String[]{Constant.TLSv1_2});
+	        serverSocket.setEnabledCipherSuites(new String[]{Constant.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256});
 	        
             AtomicInteger clientCounter = new AtomicInteger(0);
-            
 	        while(true) {
 	        	 try {
 		        	 SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
@@ -162,21 +109,6 @@ public class TlsOverTpcServer {
                 	log.error("Server socket error: " + e.getMessage());
                 }
 	        }
-	    } catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-		} catch (CertificateException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (UnrecoverableKeyException e) {
-			e.printStackTrace();
-		} catch (KeyManagementException e) {	
-			e.printStackTrace();
-		}
 	}
 
 	
@@ -216,11 +148,5 @@ public class TlsOverTpcServer {
 	    }
 	}
 	
-	private static String getKeyStorePasswordFromSystemProperty() {
-		String password = System.getProperty("keystore.password");
-	    if (password == null) {
-	        throw new IllegalStateException("Pass keystore.password variable on runtime");
-	    }
-	    return password;
-	}
+	
 }
