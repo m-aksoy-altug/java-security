@@ -2,7 +2,6 @@ package com.java;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -12,7 +11,7 @@ import com.java.client.TlsOverTpcClient;
 import com.java.server.TlsOverTpcServer;
 
 public class JavaSecurity {
-	// exec:java -Dexec.mainClass="com.java.JavaSecurity"
+	// exec:java Dkeystore.password="password" -Dexec.mainClass="com.java.JavaSecurity"
 	private static final Logger log = LoggerFactory.getLogger(JavaSecurity.class);
 	
 		

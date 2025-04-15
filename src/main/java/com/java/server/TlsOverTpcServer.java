@@ -40,9 +40,9 @@ public class TlsOverTpcServer {
 	private static final Logger log = LoggerFactory.getLogger(TlsOverTpcServer.class);
 	private static final String PKIX = "PKIX";  // Public Key Infrastructure
 	private static final String KEYSTORE = "server.p12";
-	private static final String KEYSTORE_PASSWORD = "password";
+    //private static final String KEYSTORE_PASSWORD = "password"; passing as System property "keystore.password"
 	private static final String TLSv1_3 = "TLSv1.3";
-private static final int P8443 = 8443;
+	private static final int P8443 = 8443;
 	private static final String TLSv1_2 = "TLSv1.2";
 	private static final int P8444 = 8444;
 	private static final String PKCS12 = "PKCS12";
@@ -53,11 +53,12 @@ private static final int P8443 = 8443;
 	*/
 	public static void sslServerSocketTLS1Point3OverTCP() {
 		try {
-			SSLContext sslContext = SSLContext.getInstance(TLSv1_3);
+			String password= getKeyStorePasswordFromSystemProperty();
+	        SSLContext sslContext = SSLContext.getInstance(TLSv1_3);
 			KeyStore ks = KeyStore.getInstance(PKCS12);
-			ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASSWORD.toCharArray());
+			ks.load(new FileInputStream(KEYSTORE), password.toCharArray());
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
-	        kmf.init(ks, KEYSTORE_PASSWORD.toCharArray());
+	        kmf.init(ks, password.toCharArray());
 	        // Disable hostname verification (for testing with self-signed certs)
 	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
 	        sslContext.init(kmf.getKeyManagers(), null,  new SecureRandom());
@@ -71,7 +72,7 @@ private static final int P8443 = 8443;
 	        // Enforce TLS 1.3 and AES-256-GCM
 	        serverSocket.setEnabledProtocols(new String[]{TLSv1_3});
 	        serverSocket.setEnabledCipherSuites(new String[]{TLS_AES_256_GCM_SHA384});
-	        serverSocket.setNeedClientAuth(false);   // Set to 'true' for mutual TLS
+	        serverSocket.setNeedClientAuth(false);   // true for mutual TLS, client must authenticate by KeyManager and TrustManager
 	        
 	        AtomicInteger clientCounter = new AtomicInteger(0);
 	        while(true) {
@@ -118,14 +119,15 @@ private static final int P8443 = 8443;
 	*/
 	public static void sslServerSocketTLS1Point2OverTCP() {
 		try {
-			SSLContext sslContext = SSLContext.getInstance(TLSv1_2);
+			String password= getKeyStorePasswordFromSystemProperty();
+	        SSLContext sslContext = SSLContext.getInstance(TLSv1_2);
 			KeyStore ks = KeyStore.getInstance(PKCS12);
-			ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASSWORD.toCharArray());
+			ks.load(new FileInputStream(KEYSTORE), password.toCharArray());
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance(PKIX);
-	        kmf.init(ks, KEYSTORE_PASSWORD.toCharArray());
+	        kmf.init(ks, password.toCharArray());
 	        // Disable hostname verification (for testing with self-signed certs)
 	        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-	        sslContext.init(kmf.getKeyManagers(), null, null);
+	        sslContext.init(kmf.getKeyManagers(), null,  new SecureRandom());
 	        
 	        SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
 	        SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(P8444,0, 
@@ -213,5 +215,12 @@ private static final int P8443 = 8443;
 	        }
 	    }
 	}
-
+	
+	private static String getKeyStorePasswordFromSystemProperty() {
+		String password = System.getProperty("keystore.password");
+	    if (password == null) {
+	        throw new IllegalStateException("Pass keystore.password variable on runtime");
+	    }
+	    return password;
+	}
 }

@@ -103,10 +103,8 @@ public class TlsOverTpcClient {
 				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 				BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in))) {
 
-			// Read server welcome message
 			log.info("Server says: " + in.readLine());
 
-			// Send user input to server
 			String userInput;
 			while ((userInput = consoleIn.readLine()) != null) {
 				out.println(userInput);
