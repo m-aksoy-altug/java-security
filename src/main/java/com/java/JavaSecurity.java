@@ -25,8 +25,11 @@ public class JavaSecurity {
 		// openssl s_client -connect 192.168.1.113:8444 -tls1_2
 		executors.submit(()->TlsOverTpcServer.sslServerSocketTLS1Point2OverTCP());
 		executors.submit(()-> { threadSleep(2_000); TlsOverTpcClient.sslClientSocketTLS1Point3OverTCP(); });
+		// curl -k https://192.168.1.113:9443
+		executors.submit(()-> { threadSleep(3_000); TlsOverTpcWebServer.javaNetWebServer(); });
+		// curl -k https://192.168.1.113:9444
+		executors.submit(()-> { threadSleep(4_000); TlsOverTpcWebServer.jettyWebServer(); });
 		
-		executors.submit(()-> { threadSleep(4_000); TlsOverTpcWebServer.javaNetWebServer(); });
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 	        log.info("Shutting down servers...");

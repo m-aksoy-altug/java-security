@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class Utils {
+public class TestUtils {
 	
 	public static void writeData(String fileName, byte[] writeBytes) {
 		Path filePath= Paths.get("RSA",fileName);

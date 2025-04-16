@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.java.utils.Utils;
+import com.java.utils.TestUtils;
 
 
 /*  Rivest-Shamir-Adleman
@@ -58,23 +58,23 @@ public class RsaTest {
 		generator.initialize(2048); // 2048 bits = 256 bytes
 		KeyPair pair= generator.generateKeyPair();
 		PublicKey publicK= pair.getPublic();
-		Utils.writeData("public.key",publicK.getEncoded());
+		TestUtils.writeData("public.key",publicK.getEncoded());
 		PrivateKey privateK=pair.getPrivate();
-		Utils.writeData("private.key",privateK.getEncoded());
+		TestUtils.writeData("private.key",privateK.getEncoded());
 		KeyPairGenerator bouncycastle=KeyPairGenerator.getInstance(RSA,BC); // Standard RSA (PKCS#1 key format) in TLS 1.2/1.3
 		bouncycastle.initialize(2048); // 2048 bits = 256 bytes
 		KeyPair bouncyCastlePair= bouncycastle.generateKeyPair();
 		PublicKey bouncyCastlePublicK= bouncyCastlePair.getPublic();
-		Utils.writeData("bouncyCastlePublic.key",bouncyCastlePublicK.getEncoded());
+		TestUtils.writeData("bouncyCastlePublic.key",bouncyCastlePublicK.getEncoded());
 		PrivateKey bouncyCastlePrivateK=bouncyCastlePair.getPrivate();
-		Utils.writeData("bouncyCastlePrivate.key",bouncyCastlePrivateK.getEncoded());
+		TestUtils.writeData("bouncyCastlePrivate.key",bouncyCastlePrivateK.getEncoded());
 	}
 	
 	
 	@Test
 	public void encrytAndDecryptCipherWithPublicAndPrivateKey() throws Exception {
 		KeyFactory keyFactory= KeyFactory.getInstance(RSA); // default SunRsaSign
-		byte[] publicKeyBytes= Utils.readData("public.key");
+		byte[] publicKeyBytes= TestUtils.readData("public.key");
 		X509EncodedKeySpec encodedKeySpec =new X509EncodedKeySpec(publicKeyBytes);
 		PublicKey publicKey =keyFactory.generatePublic(encodedKeySpec);
 		// Legacy Cipher: RSA/ECB/PKCS1Padding
@@ -85,7 +85,7 @@ public class RsaTest {
 		String encryptedMessage= Base64.getEncoder().encodeToString(encryptedMessageBytes);
 		log.info("encryptedMessage: "+ encryptedMessage);
 		
-		byte[] privateKeyBytes= Utils.readData("private.key");
+		byte[] privateKeyBytes= TestUtils.readData("private.key");
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 		PrivateKey privateK = keyFactory.generatePrivate(keySpec);
 		Cipher decryptCipher= Cipher.getInstance("RSA/ECB/PKCS1Padding");
@@ -103,7 +103,7 @@ public class RsaTest {
 //		generator.initialize(2048); // 2048 bits = 256 bytes
 //		KeyPair pair= generator.generateKeyPair();
 		KeyFactory keyFactory= KeyFactory.getInstance(RSA);
-		byte[] publicKeyBytes= Utils.readData("public.key");
+		byte[] publicKeyBytes= TestUtils.readData("public.key");
 		X509EncodedKeySpec encodedKeySpec =new X509EncodedKeySpec(publicKeyBytes);
 		PublicKey publicK =keyFactory.generatePublic(encodedKeySpec);
 //		PublicKey publicK= pair.getPublic();
@@ -138,7 +138,7 @@ public class RsaTest {
 		// "1.1.1" : Specifies RSA Encryption (PKCS #1) Core RSA Standard 
 		// "1.1.4" : RSA with MD5 // "1.1.5" :  RSA with SHA-1 // "1.1.11" :  RSA with SHA-256
 		
-		byte[] privateKeyBytes= Utils.readData("private.key");
+		byte[] privateKeyBytes= TestUtils.readData("private.key");
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 		PrivateKey privateK = keyFactory.generatePrivate(keySpec);
 		

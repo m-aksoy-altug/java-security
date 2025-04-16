@@ -1,9 +1,10 @@
 package com.java.utils;
 
 public class Constant {
-	public static final int P8443 = 8443;
-	public static final int P8444 = 8444;
-	public static final int P9443 = 9443; // Using for HTTPS
+	public static final int P8443 = 8443; // SSL/TLS-secured TCP socket , SSLSocket for only TLSv1_3
+	public static final int P8444 = 8444; // SSL/TLS-secured TCP socket , SSLSocket for only TLSv1_2
+	public static final int P9443 = 9443; // Using for java net HTTPS server for both TLSv1_3 and TLSv1_2
+	public static final int P9444 = 9444; // Using for Jetty HTTPS server for both TLSv1_3 and TLSv1_2
 	public static final String PKIX = "PKIX";  // Public Key Infrastructure
 	public static final String KEYSTORE = "server.p12";
 	public static final String TLSv1_3 = "TLSv1.3";

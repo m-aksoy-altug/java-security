@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -19,6 +20,8 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
+
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class Utils {
 
@@ -115,12 +118,20 @@ public class Utils {
 		} catch (KeyManagementException e) {
 			e.printStackTrace();
 		} catch (UnrecoverableKeyException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	       return sslContext;
 	}
 	
+	
+	public static SslContextFactory.Server createSslContextFactory() {
+		SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+		String password = getKeyStorePasswordFromSystemProperty();
+		sslContextFactory.setKeyStorePath(Paths.get(Constant.KEYSTORE).toAbsolutePath().toString());
+        sslContextFactory.setKeyStorePassword(password);
+        sslContextFactory.setKeyStoreType(Constant.PKCS12);
+        return sslContextFactory;
+	}
 	
 	private static String getKeyStorePasswordFromSystemProperty() {
 		String password = System.getProperty("keystore.password");
