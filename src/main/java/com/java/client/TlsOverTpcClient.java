@@ -18,7 +18,8 @@ import org.slf4j.LoggerFactory;
 import com.java.utils.Constant;
 import com.java.utils.Utils;
 
-
+/* - HTTP1.1 | HTTP2
+*/
 public class TlsOverTpcClient {
 	
 	private static final Logger log = LoggerFactory.getLogger(TlsOverTpcClient.class);

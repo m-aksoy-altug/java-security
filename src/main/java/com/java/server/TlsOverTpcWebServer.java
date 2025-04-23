@@ -14,6 +14,8 @@ import javax.net.ssl.SSLSession;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
+import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.ssl.SslConnection;
@@ -46,7 +48,9 @@ import com.sun.net.httpserver.HttpsServer;
 */
 public class TlsOverTpcWebServer {
 	private static final Logger log = LoggerFactory.getLogger(TlsOverTpcWebServer.class);
-
+	
+	/* HTTP/1.1 over TLS
+	*/
 	public static void javaNetWebServer() {
 		try {
 		SSLContext sslContext = Utils.createSSLContext();
@@ -87,7 +91,9 @@ public class TlsOverTpcWebServer {
 			e.printStackTrace();
 		}
 	}
-	
+
+	/* HTTP/1.1 + HTTP/2 over TLS
+	*/
 	public static void jettyWebServer() {
 		try {
 			Server server = new Server();
@@ -97,24 +103,47 @@ public class TlsOverTpcWebServer {
 											Constant.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 );
 	        HttpConfiguration httpsConfig = new HttpConfiguration();
 	        httpsConfig.addCustomizer(new SecureRequestCustomizer());
+	        		
+	        /*- HTTP/1.1 
+	         * - Multiplexing : NO  Only one request per TCP connection at a time. This leads to head-of-line (HOL) blocking.
+	         * - Text framing  - Headers are not compressed
+	        */		
+	        HttpConnectionFactory http1 = new HttpConnectionFactory();
+	        
+	        /*- HTTP/2 
+	         * - Multiplexing : Yes — Multiple requests/responses over a single connection.
+	         * - Binary framing: Uses a binary protocol instead of text.
+	         * - Header compression: Uses HPACK for header compression.
+	         * - Prioritization: Requests can have priorities.
+	         * - Connection reuse: Efficient with a single connection.
+	        */
+	        HTTP2ServerConnectionFactory http2 = new HTTP2ServerConnectionFactory();
+	     
+	         // Application-Layer Protocol Negotiation
+	        ALPNServerConnectionFactory alpn = new ALPNServerConnectionFactory();
+	        alpn.setDefaultProtocol(http1.getProtocol());
 
-	        HttpConnectionFactory http = new HttpConnectionFactory();
-	        ServerConnector sslConnector = new ServerConnector(server,
-	                new SslConnectionFactory(sslContextFactory, http.getProtocol()),
-	                new HttpConnectionFactory(httpsConfig));
+	        // SSL + ALPN //Application-Layer Protocol Negotiation
+	        SslConnectionFactory ssl = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
+	        ServerConnector sslConnector = new ServerConnector(server, ssl, alpn, http2, http1);
+	        
+	        
 	        sslConnector.setPort(Constant.P9444);
 	        server.setConnectors(new Connector[]{sslConnector});
 	       
+	        // can be replace by SimpleHttp3Handler class for now keeping it as Handler
 	        server.setHandler(new Handler() {
 			@Override
 			public boolean handle(Request request, Response response, Callback callback) throws Exception {
 				StringBuilder sb = new StringBuilder(); 
 				sb.append("Raw Jetty 12 Handler!\n");
 				try {
-					 if (request.isSecure()) {
+					 if (request.isSecure()) {	
 						    Connection connection = request.getConnectionMetaData().getConnection();
 		                    EndPoint endPoint = connection.getEndPoint();
+		                    sb.append("Protocol: ").append(request.getConnectionMetaData().getProtocol()).append("\n");
 		                    sb.append("Client Address: ").append(endPoint.getRemoteSocketAddress()).append("\n");
+		                    sb.append("Connection: ").append(connection.getClass().getName()).append("\n");
 						    if (connection instanceof SslConnection sslConnection) {
 		                        SSLSession sslSession = sslConnection.getSSLEngine().getSession();
 	                            sb.append("SSL Protocol: ").append(sslSession.getProtocol()).append("\n");
@@ -181,10 +210,10 @@ public class TlsOverTpcWebServer {
 			}
 		});
 	        server.start();
-	        log.info("Jetty server started on https://"+ Constant.IP+":" + Constant.P9444);
+	        log.info("Jetty HTTP/2 or HTTP/1.1 server started on https://"+ Constant.IP+":" + Constant.P9444);
 	        server.join();
      	} catch (IOException e) {
-			log.error("Jetty Https server connection error: " + e.getMessage());
+			log.error("Jetty HTTP/2 or HTTP/1.1 server connection error: " + e.getMessage());
 			e.printStackTrace();
 		} catch (Exception e) {
 

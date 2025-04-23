@@ -8,8 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.java.client.TlsOverTpcClient;
+import com.java.client.TlsOverUdpClient;
 import com.java.server.TlsOverTpcServer;
 import com.java.server.TlsOverTpcWebServer;
+import com.java.server.TlsOverUdpWebServer;
 
 public class JavaSecurity {
 	// exec:java Dkeystore.password="password" -Dexec.mainClass="com.java.JavaSecurity"
@@ -17,7 +19,7 @@ public class JavaSecurity {
 	
 		
 	public static void main(String[] args) {
-		
+		System.setProperty("org.eclipse.jetty.LEVEL", "DEBUG");
 		ExecutorService executors =Executors.newCachedThreadPool();  // Executors.newFixedThreadPool(3);
 		// wireshark: ip.addr == 192.168.1.113 && tcp.port==8443
 		// openssl s_client -connect 192.168.1.113:8443 -tls1_3
@@ -27,9 +29,12 @@ public class JavaSecurity {
 		executors.submit(()-> { threadSleep(2_000); TlsOverTpcClient.sslClientSocketTLS1Point3OverTCP(); });
 		// curl -k https://192.168.1.113:9443
 		executors.submit(()-> { threadSleep(3_000); TlsOverTpcWebServer.javaNetWebServer(); });
-		// curl -k https://192.168.1.113:9444
+		// curl -v --http2 https://192.168.1.113:9444 -k
 		executors.submit(()-> { threadSleep(4_000); TlsOverTpcWebServer.jettyWebServer(); });
-		
+		// curl -v --http2 https://192.168.1.113:7444 -k	
+		// openssl s_client -connect 192.168.1.113:7443 -alpn h3
+		executors.submit(()-> { threadSleep(5_000); TlsOverUdpWebServer.jettyWebServer(); });
+		executors.submit(()-> { threadSleep(7_000); TlsOverUdpClient.webClientTLS1Point3OverUDP(); });
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 	        log.info("Shutting down servers...");

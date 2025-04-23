@@ -130,10 +130,16 @@ public class Utils {
 		sslContextFactory.setKeyStorePath(Paths.get(Constant.KEYSTORE).toAbsolutePath().toString());
         sslContextFactory.setKeyStorePassword(password);
         sslContextFactory.setKeyStoreType(Constant.PKCS12);
+        // Using the same Keystore as TrustStore, in pro, seperate trust store with CA Certificates 
+        sslContextFactory.setTrustStorePath(Paths.get(Constant.KEYSTORE).toAbsolutePath().toString());
+        sslContextFactory.setTrustStorePassword(password);
+        sslContextFactory.setTrustAll(false); 
+        sslContextFactory.setNeedClientAuth(false); 
+        // sslContextFactory.setValidatePeerCerts(true); 
         return sslContextFactory;
 	}
 	
-	private static String getKeyStorePasswordFromSystemProperty() {
+	public static String getKeyStorePasswordFromSystemProperty() {
 		String password = System.getProperty("keystore.password");
 		if (password == null) {
 			throw new IllegalStateException("Pass keystore.password variable on runtime");
