@@ -33,18 +33,15 @@ public class TlsOverUdpClient {
 	private static final Logger log = LoggerFactory.getLogger(TlsOverUdpClient.class);
 	/* 
 	 * - HTTP/3+QUIC support is experimental and not suited for production use.
-	 * - Client request ok but server is not responsive.
-	 * sudo tcpdump -i any -nn -v udp port 7443 
-	 * - 15:56:34.541939 lo    In  IP (tos 0x0, ttl 64, id 54844, offset 0, flags [DF], proto UDP (17), length 1228)
-	 * - 192.168.1.113.41669 > 192.168.1.113.7443: UDP, length 1200
 	 */
 
 	public static void webClientTLS1Point3OverUDP() {
 		try {
 			System.setProperty("javax.net.debug", "ssl,handshake,record");
 			SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
-			sslContextFactory.setTrustAll(true);
-			sslContextFactory.setEndpointIdentificationAlgorithm(null);
+			// trust all for only testing, regardless of whether they are valid, self-signed, expired, or untrusted by a known Certificate Authority.
+			sslContextFactory.setTrustAll(true); 
+			sslContextFactory.setEndpointIdentificationAlgorithm(null); // skip domain validation for only testing!!
 			Path pemDir = Paths.get("jetty-quic-client-pem");
 			Files.createDirectories(pemDir);
 
