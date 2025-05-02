@@ -9,8 +9,8 @@ import java.nio.file.Paths;
 
 public class TestUtils {
 	
-	public static void writeData(String fileName, byte[] writeBytes) {
-		Path filePath= Paths.get("RSA",fileName);
+	public static void writeData(String path, String fileName, byte[] writeBytes) {
+		Path filePath= Paths.get(path,fileName);
 		try (FileOutputStream fos = new FileOutputStream(filePath.toAbsolutePath().toString())) {
 		    fos.write(writeBytes); // raw 
 		} catch (FileNotFoundException e) {
@@ -21,8 +21,8 @@ public class TestUtils {
 	}
 	
 	
-	public static byte[] readData(String fileName) {
-		Path filePath= Paths.get("RSA",fileName);
+	public static byte[] readData(String path, String fileName) {
+		Path filePath= Paths.get(path,fileName);
 		try {
 			 return Files.readAllBytes(filePath); // raw
 		} catch (FileNotFoundException e) {

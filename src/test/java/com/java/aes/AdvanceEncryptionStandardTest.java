@@ -65,7 +65,7 @@ public class AdvanceEncryptionStandardTest {
 		KeyGenerator aesBC=KeyGenerator.getInstance(AES, BC); 
 		aesBC.init(256); //256 bits
 		SecretKey secretKey= aesBC.generateKey();
-		TestUtils.writeData("aesSecretKey.key",secretKey.getEncoded());
+		TestUtils.writeData("RSA","aesSecretKey.key",secretKey.getEncoded());
 	}
 	
 	/*
@@ -80,7 +80,7 @@ public class AdvanceEncryptionStandardTest {
 	    KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), 65536, 256);
 		    SecretKey secret = new SecretKeySpec(factory.generateSecret(spec)
 		        .getEncoded(), AES);
-		TestUtils.writeData("aesSecretKeyFromPassword.key",secret.getEncoded());
+		TestUtils.writeData("RSA","aesSecretKeyFromPassword.key",secret.getEncoded());
 	}
 
 	/*  - RSA + AES-GCM  (Hybrid Approach)
@@ -93,7 +93,7 @@ public class AdvanceEncryptionStandardTest {
 		String message = "Encryption: Step 1: Generate a random AES-256 key, Step 2: Encrypt the AES key with RSA Step 3: Encrypt data with AES-GCM Combine IV + encrypted AES key + encrypted data";
 		byte[] 	encryptedMessage= clientEncrytWithAES(message);
 		KeyFactory keyFactory= KeyFactory.getInstance(RSA);
-		byte[] privateKeyBytes= TestUtils.readData("private.key");
+		byte[] privateKeyBytes= TestUtils.readData("RSA","private.key");
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
 		PrivateKey rsaPrivateKey = keyFactory.generatePrivate(keySpec);
 		
@@ -131,11 +131,11 @@ public class AdvanceEncryptionStandardTest {
 	public byte[] clientEncrytWithAES(String message) throws Exception {
 		
 		KeyFactory keyFactory= KeyFactory.getInstance(RSA); // default SunRsaSign
-		byte[] publicKeyBytes= TestUtils.readData("public.key");
+		byte[] publicKeyBytes= TestUtils.readData("RSA","public.key");
 		X509EncodedKeySpec encodedKeySpec =new X509EncodedKeySpec(publicKeyBytes);
 		PublicKey rsaPublicKey =keyFactory.generatePublic(encodedKeySpec);
 		
-		byte[] aesSecretKeyBytes= TestUtils.readData("aesSecretKey.key");
+		byte[] aesSecretKeyBytes= TestUtils.readData("RSA","aesSecretKey.key");
 		SecretKey aesSecretKey= new SecretKeySpec(aesSecretKeyBytes , AES);
 		
 		 //  Encrypt the AES key with RSA

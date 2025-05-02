@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.java.jwt.Jwt;
 import com.java.utils.Constant;
 
 /* - HTTP3
@@ -70,21 +71,25 @@ public class TlsOverUdpClient {
 			CompletableFuture<Session.Client> sessionFuture = client.
 					connect(address, new Session.Client.Listener() {});
 			Session.Client session = sessionFuture.get();
-		
-			HttpFields fields = HttpFields.build().put(HttpHeader.USER_AGENT, "Jetty HTTP3Client");
+			// sharedSecret not here, usually from IAM provider, like OpenID Connect or Keycloak
+			final byte[] sharedSecret = Files.readAllBytes(Paths.get("JWT","jwt-shared.key"));
+			String jws= Jwt.createSignedJwt(sharedSecret);
+			HttpFields fields = HttpFields.build().put(HttpHeader.USER_AGENT, "Jetty HTTP3Client")
+					.put(HttpHeader.AUTHORIZATION, "Bearer "+ jws);
 
 			HttpURI uri = HttpURI.from("https://" + Constant.IP + ":" + Constant.P7443 + "/");
 			MetaData.Request metaData = new MetaData.Request("GET", uri, HttpVersion.HTTP_3, fields);
 			HeadersFrame headersFrame = new HeadersFrame(metaData, true);
 
 			session.newRequest(headersFrame, new Stream.Client.Listener() {
-
+			
 				@Override
 				public void onDataAvailable(Stream.Client stream) {
 					Stream.Data data = stream.readData();
 					if (data == null) {
 						stream.demand();
 					} else {
+						
 						ByteBuffer buffer = data.getByteBuffer();
 						byte[] bytes = new byte[buffer.remaining()];
 						buffer.get(bytes);

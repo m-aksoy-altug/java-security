@@ -1,13 +1,16 @@
 package com.java.server;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
@@ -29,8 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.java.jwt.Jwt;
 import com.java.utils.Constant;
 import com.java.utils.Utils;
+import com.nimbusds.jose.JOSEException;
 
 /* HTTP/3 runs over QUIC, UDP based protocol
  * - Multiplexing : QUIC handles streams independently, avoiding “head-of-line blocking” issues seen in TCP-based HTTP/2.
@@ -116,10 +121,22 @@ public class TlsOverUdpWebServer {
 	
 	
     private static void respond(Stream.Server stream, MetaData.Request request){
+//    	for(HttpField field : request.getHttpFields()) {
+//            log.info("Header: {} = {}",field.getName(),field.getValue());
+//        }	
        HttpFields.Mutable fields = HttpFields.build();
-    	fields.put(HttpHeader.CONTENT_TYPE, "application/json");
+       fields.put(HttpHeader.CONTENT_TYPE, "application/json");
+    	String jwt= request.getHttpFields().stream()
+    		.filter(x-> x.getName().equals("authorization"))
+    		.map(x-> x.getValue())
+    		.findFirst().orElse(null);
+    			//.orElseThrow(() -> new IllegalArgumentException("Missing Authorization header"));
+    	//og.info("JWT: {} ",jwt);
+    	
     	MetaData.Response response = new MetaData.Response(HttpStatus.OK_200, null, HttpVersion.HTTP_3, fields);
-        if (HttpMethod.GET.is(request.getMethod())){
+    	if(jwt ==null || validateJwt(jwt)) {
+    		stream.respond(new HeadersFrame(new MetaData.Response(HttpStatus.UNAUTHORIZED_401, null, HttpVersion.HTTP_3, fields), true));
+    	}else if (HttpMethod.GET.is(request.getMethod())){
             ByteBuffer resourceBytes = getResourceBytes(request);
             stream.respond(new HeadersFrame(response, false))
             	.thenAccept(s -> s.data(new DataFrame(resourceBytes, true)));
@@ -129,19 +146,33 @@ public class TlsOverUdpWebServer {
         }
     }
     
+    private static boolean validateJwt(String jwt) {
+    	try {
+    		// sharedSecret not here or even authorization validation, usually in API gateway before request reach out this server. 
+			final byte[] sharedSecret = Files.readAllBytes(Paths.get("JWT","jwt-shared.key"));
+	    	Jwt.validateSignedJwt(jwt.replace("Bearer ", ""), sharedSecret);
+    	} catch (IOException e) {
+        	return true;
+    	} catch (JOSEException e) {
+        	return true;
+		} catch (ParseException e) {
+	    	return true;
+		}
+		return false; 
+    }
+    
 	private static ByteBuffer getResourceBytes(MetaData.Request request) {
+		
 	    String uri = request.getHttpURI().toString();
 	    Map<String, Object> jsonMap = new HashMap<>();
 	    log.info("Handling GET request for URI: "+ uri);
-	    switch (uri) {
-	        case "/error":
+	    if(uri.endsWith("error")) {
 	        	jsonMap.put("error", "Not Found");
 	        	jsonMap.put("status", 404);
-	             break;
-	        default:
+	    }
+	    else {
 	        	jsonMap.put("message", "Welcome to Jetty HTTP/3");
 	        	jsonMap.put("status", 200);
-	            break;
 	    }
 	    try {
 	        byte[] jsonBytes = mapper.writeValueAsBytes(jsonMap);
