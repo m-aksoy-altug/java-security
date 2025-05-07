@@ -97,10 +97,14 @@ public class Jwt {
         return (JWTClaimsSet) signedJWT.getJWTClaimsSet();
 	}
 	
+	/* - HmacSHA256: 256-bits key = 256/8=32 bytes
+	 * - HmacSHA384: 384-bits key = 384/8=48 bytes
+	 * - HmacSHA512: 512-bits key = 384/8=64 bytes
+	*/
 	public static byte[] generateNewSecretKey() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-            keyGen.init(256); // 256-bit key
+            keyGen.init(256); // 256-bits key = 256/8=32 bytes
             return keyGen.generateKey().getEncoded();
         } catch (NoSuchAlgorithmException e) {
             // Fallback to SecureRandom
