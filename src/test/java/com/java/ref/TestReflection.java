@@ -15,6 +15,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.java.jwt.Jwt;
+import com.java.utils.Contoller;
+import com.java.utils.Service;
+import com.java.utils.SpecialService;
 import com.java.utils.TestUtils;
 
 /*
@@ -41,8 +44,17 @@ import com.java.utils.TestUtils;
  * - Template Engine: Dynamic Code Generation: EX: Apache Velocity, Freemarker
  * To dynamically generate code based on templates or configuration files. 
  */
+
+
 public class TestReflection {
-	
+		
+	@Test
+	public void BasicDepedencyInjection() throws Exception {
+		Reflection ref = new Reflection();
+		ref.manualBind(Service.class, SpecialService.class);
+		Contoller controller = ref.basicDependencyInjector(Contoller.class);
+		assertEquals("SpecialService is executing.",controller.fetch());
+	}
 	
 	
 	@Test
