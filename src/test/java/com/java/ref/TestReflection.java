@@ -14,10 +14,10 @@ import java.util.Base64;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.java.controller.Contoller;
 import com.java.jwt.Jwt;
-import com.java.utils.Contoller;
-import com.java.utils.Service;
-import com.java.utils.SpecialService;
+import com.java.service.Service;
+import com.java.service.SpecialService;
 import com.java.utils.TestUtils;
 
 /*
@@ -45,14 +45,15 @@ import com.java.utils.TestUtils;
  * To dynamically generate code based on templates or configuration files. 
  */
 
-
 public class TestReflection {
 		
 	@Test
 	public void BasicDepedencyInjection() throws Exception {
-		Reflection ref = new Reflection();
-		ref.manualBind(Service.class, SpecialService.class);
-		Contoller controller = ref.basicDependencyInjector(Contoller.class);
+		BasicReflection ref = new BasicReflection();
+		Contoller controller= ref.basicAnnotationBasedDependencyInjector(Contoller.class);
+		// Injecting Dependency by Constructor
+		//Contoller controller = ref.basicDependencyInjector(Contoller.class);
+		System.out.println(controller.fetch());
 		assertEquals("SpecialService is executing.",controller.fetch());
 	}
 	

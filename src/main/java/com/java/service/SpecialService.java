@@ -1,4 +1,4 @@
-package com.java.utils;
+package com.java.service;
 
 public class SpecialService implements Service {
 	
