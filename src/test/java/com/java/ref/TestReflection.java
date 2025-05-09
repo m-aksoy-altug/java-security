@@ -49,9 +49,18 @@ import com.java.utils.TestUtils;
 public class TestReflection {
 	
 	@Test
+	public void BasicObjectRelationalMapping() throws Exception {
+		BasicReflection ref = new BasicReflection();
+		String insertQuery =
+				ref.basicInsertORMbyEntityManager(new Hibernate(1, "Dummy", "dummy@gmail.com"));
+		System.out.println("insertQuery"+insertQuery);
+		assertTrue(insertQuery.contains("INSERT INTO"));
+	}
+	
+	@Test
 	public void BasicAspectOrientedProgramming() throws Exception {
 		BasicReflection ref = new BasicReflection();
-		ServiceA proxyServiceA= (ServiceA) ref.createProxy(new SpecialServiceA(), new AspectLogging());
+		ServiceA proxyServiceA= (ServiceA) ref.createAOPproxy(new SpecialServiceA(), new AspectLogging());
 		proxyServiceA.get();
 	}
 	

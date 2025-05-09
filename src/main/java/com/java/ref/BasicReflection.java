@@ -8,9 +8,17 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.java.ref.anno.Column;
+import com.java.ref.anno.Entity;
+import com.java.ref.anno.Inject;
 
 public class BasicReflection {
 	private static final Logger log = LoggerFactory.getLogger(BasicReflection.class);
@@ -46,14 +54,14 @@ public class BasicReflection {
 	}
 
 	public <T> T basicAnnotationBasedDependencyInjector(Class<T> clazzz) {
-		//log.info("clazzz.getName():::" + clazzz.getName());
+		// log.info("clazzz.getName():::" + clazzz.getName());
 		try {
 			// return all constructors but not includes inherited ones.
 			Constructor<T> constructor = clazzz.getDeclaredConstructor();
 			constructor.setAccessible(true);
 			T instance = constructor.newInstance();
-			//log.info("instance :: " + instance.getClass().getName());
-			
+			// log.info("instance :: " + instance.getClass().getName());
+
 			for (Field field : clazzz.getDeclaredFields()) {
 				if (field.isAnnotationPresent(Inject.class)) {
 					Class<?> fieldType = field.getType();
@@ -63,23 +71,26 @@ public class BasicReflection {
 						throw new RuntimeException("No implementation found for " + fieldType.getName());
 					}
 
-					Object dependency = basicAnnotationBasedDependencyInjector(implClass); // Recursive dependency creator
-					//log.info("dependency.getClass().getName():: " + dependency.getClass().getName());									
-					//log.info("instance for dependency:: " + instance.getClass().getName());
+					Object dependency = basicAnnotationBasedDependencyInjector(implClass); // Recursive dependency
+																							// creator
+					// log.info("dependency.getClass().getName():: " +
+					// dependency.getClass().getName());
+					// log.info("instance for dependency:: " + instance.getClass().getName());
 					field.setAccessible(true);
 					field.set(instance, dependency);
 				}
 			}
-			
+
 			return instance;
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to inject dependencies", e);
 		}
 	}
-	
-	/* - Scan only inside the same package name, usually interface and implementors should be in same package
-	 * TODO : Scan all subpackages recursively. 
-	*/
+
+	/*
+	 * - Scan only inside the same package name, usually interface and implementors
+	 * should be in same package TODO : Scan all subpackages recursively.
+	 */
 	private Class<?> scanningImplementedClasses(Class<?> clazzz) {
 		try {
 			String packageName = clazzz.getPackageName();
@@ -92,9 +103,9 @@ public class BasicReflection {
 				throw new RuntimeException("Cannot find resource for package: " + packageName);
 			}
 			File directory = new File(resource.toURI());
-			// log.info("directory:: " + directory);	
+			// log.info("directory:: " + directory);
 			return scanDirectoryForImplementation(directory, packageName, clazzz);
-			
+
 		} catch (Exception e) {
 			throw new RuntimeException("Error scanning package: " + e.getMessage(), e);
 		}
@@ -129,21 +140,53 @@ public class BasicReflection {
 		}
 		return null;
 	}
-	
-	public Object createProxy(Object obj, AspectLogging aspectLogging) {
-		return Proxy.newProxyInstance(
-				obj.getClass().getClassLoader(), obj.getClass().getInterfaces(),
+
+	public Object createAOPproxy(Object obj, AspectLogging aspectLogging) {
+		return Proxy.newProxyInstance(obj.getClass().getClassLoader(), obj.getClass().getInterfaces(),
 				new InvocationHandler() {
 					@Override
 					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 						// log.info("createProxy- invoke: " + args);
 						aspectLogging.before(method.getName());
-						Object result= method.invoke(obj, args);
+						Object result = method.invoke(obj, args);
 						aspectLogging.after(method.getName());
 						return result;
 					}
 				});
-		
+
 	}
+
+	public String basicInsertORMbyEntityManager(Object obj) {
+		List<String> columns = new ArrayList<>();
+		List<String> values = new ArrayList<>();
+		Class<?> clazz = obj.getClass();
+		if (!clazz.isAnnotationPresent(Entity.class)) {
+			throw new RuntimeException("No @Entity annotation...");
+		}
+		Entity entity = clazz.getAnnotation(Entity.class);
+		String tableName = entity.name();
+		for (Field field : clazz.getDeclaredFields()) {
+			if (field.isAnnotationPresent(Column.class)) {
+				field.setAccessible(true);
+				Column column = field.getAnnotation(Column.class);
+				columns.add(column.name());
+				try {
+					Object value = field.get(obj);
+					if (value instanceof String) {
+						values.add("'" + value + "'");
+					} else {
+						values.add(value.toString());
+					}
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					log.error("IllegalArgumentException | IllegalAccessException" + e);
+				}
+		    }
+		}
+		return 	"INSERT INTO " + tableName + 
+				"(" + String.join(", ", columns) + 
+				") VALUES (" +  String.join(", ", values) + ");";
+	}
+
+	
 	
 }
