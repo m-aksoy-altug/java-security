@@ -3,7 +3,10 @@ package com.java.ref;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 
 import org.slf4j.Logger;
@@ -12,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class BasicReflection {
 	private static final Logger log = LoggerFactory.getLogger(BasicReflection.class);
 
-	public <T> T basicDependencyInjector(Class<T> clazzz) {
+	public <T> T basicConstructorBasedDependencyInjector(Class<T> clazzz) {
 		try {
 			if (clazzz.isInterface()) {
 				Class<?> impl = scanningImplementedClasses(clazzz);
@@ -31,7 +34,7 @@ public class BasicReflection {
 				Object[] params = new Object[paramTypes.length];
 				for (int i = 0; i < paramTypes.length; i++) {
 					log.info("recursive DI:::" + paramTypes[i].getName());
-					params[i] = basicDependencyInjector(paramTypes[i]);
+					params[i] = basicConstructorBasedDependencyInjector(paramTypes[i]);
 				}
 				return (T) constructor.newInstance(params);
 			} else {
@@ -126,5 +129,21 @@ public class BasicReflection {
 		}
 		return null;
 	}
-
+	
+	public Object createProxy(Object obj, AspectLogging aspectLogging) {
+		return Proxy.newProxyInstance(
+				obj.getClass().getClassLoader(), obj.getClass().getInterfaces(),
+				new InvocationHandler() {
+					@Override
+					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+						// log.info("createProxy- invoke: " + args);
+						aspectLogging.before(method.getName());
+						Object result= method.invoke(obj, args);
+						aspectLogging.after(method.getName());
+						return result;
+					}
+				});
+		
+	}
+	
 }

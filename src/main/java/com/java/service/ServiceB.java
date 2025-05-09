@@ -1,5 +1,5 @@
 package com.java.service;
 
-public interface Service {
+public interface ServiceB {
 	String get();
 }

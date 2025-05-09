@@ -14,10 +14,11 @@ import java.util.Base64;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.java.controller.Contoller;
+import com.java.controller.ContollerA;
+import com.java.controller.ContollerB;
 import com.java.jwt.Jwt;
-import com.java.service.Service;
-import com.java.service.SpecialService;
+import com.java.service.ServiceA;
+import com.java.service.SpecialServiceA;
 import com.java.utils.TestUtils;
 
 /*
@@ -46,15 +47,21 @@ import com.java.utils.TestUtils;
  */
 
 public class TestReflection {
-		
+	
+	@Test
+	public void BasicAspectOrientedProgramming() throws Exception {
+		BasicReflection ref = new BasicReflection();
+		ServiceA proxyServiceA= (ServiceA) ref.createProxy(new SpecialServiceA(), new AspectLogging());
+		proxyServiceA.get();
+	}
+	
 	@Test
 	public void BasicDepedencyInjection() throws Exception {
 		BasicReflection ref = new BasicReflection();
-		Contoller controller= ref.basicAnnotationBasedDependencyInjector(Contoller.class);
-		// Injecting Dependency by Constructor
-		//Contoller controller = ref.basicDependencyInjector(Contoller.class);
-		System.out.println(controller.fetch());
-		assertEquals("SpecialService is executing.",controller.fetch());
+		ContollerA controllerA= ref.basicAnnotationBasedDependencyInjector(ContollerA.class);
+		assertEquals("SpecialService A is executing.",controllerA.fetch());
+	    ContollerB controllerB = ref.basicConstructorBasedDependencyInjector(ContollerB.class);
+		assertEquals("SpecialService B is executing.",controllerB.fetch());
 	}
 	
 	
