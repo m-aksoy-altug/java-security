@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.java.ref.controller.ContollerA;
 import com.java.ref.controller.ContollerB;
 import com.java.ref.entity.Hibernate;
+import com.java.ref.pojo.Pojo;
 import com.java.ref.repo.HibernateRepository;
 import com.java.jwt.Jwt;
 import com.java.ref.service.ServiceA;
@@ -49,7 +50,19 @@ import com.java.ref.service.SpecialServiceA;
 public class TestReflection {
 	
 	@Test
-	public void BasicHibernateRepository() throws Exception {
+	public void basicSerialization() throws Exception {
+		BasicReflection ref = new BasicReflection();
+		Pojo test= new Pojo("Pojo to JSON",2);
+		String jsonFormat= ref.basicSerializeToJson(test);
+		// System.out.println("jsonFormat:: "+jsonFormat);
+		assertTrue(jsonFormat.contains("{"));
+		assertTrue(jsonFormat.contains("}"));
+		Pojo pojo =ref.basicDeSerializeToPoJo(jsonFormat, Pojo.class);
+		assertEquals(pojo.toString(),test.toString());
+	}
+	
+	@Test
+	public void basicHibernateRepository() throws Exception {
 		BasicReflection ref = new BasicReflection();
 		HibernateRepository hibernateRepo = ref.createRepository(HibernateRepository.class);
 		Boolean result= hibernateRepo.save(new Hibernate(1, "Dummy", "dummy@gmail.com"));
@@ -58,23 +71,23 @@ public class TestReflection {
 	}
 	
 	@Test
-	public void BasicObjectRelationalMapping() throws Exception {
+	public void basicObjectRelationalMapping() throws Exception {
 		BasicReflection ref = new BasicReflection();
 		String insertQuery =
 				ref.basicInsertORMbyEntityManager(new Hibernate(1, "Dummy", "dummy@gmail.com"));
-		System.out.println("insertQuery"+insertQuery);
+		//System.out.println("insertQuery"+insertQuery);
 		assertTrue(insertQuery.contains("INSERT INTO"));
 	}
 	
 	@Test
-	public void BasicAspectOrientedProgramming() throws Exception {
+	public void basicAspectOrientedProgramming() throws Exception {
 		BasicReflection ref = new BasicReflection();
 		ServiceA proxyServiceA= (ServiceA) ref.createAOPproxy(new SpecialServiceA(), new AspectLogging());
 		proxyServiceA.get();
 	}
 	
 	@Test
-	public void BasicDepedencyInjection() throws Exception {
+	public void basicDepedencyInjection() throws Exception {
 		BasicReflection ref = new BasicReflection();
 		ContollerA controllerA= ref.basicAnnotationBasedDependencyInjector(ContollerA.class);
 		assertEquals("SpecialService A is executing.",controllerA.fetch());
