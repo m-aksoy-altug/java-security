@@ -1,7 +1,7 @@
-package com.java.controller;
+package com.java.ref.controller;
 
 import com.java.ref.anno.Inject;
-import com.java.service.ServiceA;
+import com.java.ref.service.ServiceA;
 
 public class ContollerA {
 	

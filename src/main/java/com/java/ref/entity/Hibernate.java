@@ -1,10 +1,11 @@
-package com.java.ref;
+package com.java.ref.entity;
 
 import com.java.ref.anno.Entity;
 import com.java.ref.anno.Id;
 import com.java.ref.anno.Column;
 
-@Entity(name="Hibernate")  
+//Hibernate is a table name
+@Entity(name="Hibernate") 
 public class Hibernate {
 	
 	@Id
@@ -22,7 +23,7 @@ public class Hibernate {
         this.name = name;
         this.email = email;
     }
-
+    public Hibernate() {}
 	public int getId() {
 		return id;
 	}

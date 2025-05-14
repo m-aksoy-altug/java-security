@@ -1,4 +1,4 @@
-package com.java.service;
+package com.java.ref.service;
 
 public class SpecialServiceA implements ServiceA {
 		

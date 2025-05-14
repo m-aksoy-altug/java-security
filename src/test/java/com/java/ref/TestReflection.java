@@ -7,19 +7,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.Base64;
 
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
 
-import com.java.controller.ContollerA;
-import com.java.controller.ContollerB;
+import com.java.ref.controller.ContollerA;
+import com.java.ref.controller.ContollerB;
+import com.java.ref.entity.Hibernate;
+import com.java.ref.repo.HibernateRepository;
 import com.java.jwt.Jwt;
-import com.java.service.ServiceA;
-import com.java.service.SpecialServiceA;
-import com.java.utils.TestUtils;
+import com.java.ref.service.ServiceA;
+import com.java.ref.service.SpecialServiceA;
+
 
 /*
  * - Dependency-Injection (DI) and Inversion-of-Control-Containers (IoC):
@@ -47,6 +47,15 @@ import com.java.utils.TestUtils;
  */
 
 public class TestReflection {
+	
+	@Test
+	public void BasicHibernateRepository() throws Exception {
+		BasicReflection ref = new BasicReflection();
+		HibernateRepository hibernateRepo = ref.createRepository(HibernateRepository.class);
+		Boolean result= hibernateRepo.save(new Hibernate(1, "Dummy", "dummy@gmail.com"));
+		hibernateRepo.findById(5);
+		assertTrue(result);
+	}
 	
 	@Test
 	public void BasicObjectRelationalMapping() throws Exception {

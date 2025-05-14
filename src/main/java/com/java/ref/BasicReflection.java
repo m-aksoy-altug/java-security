@@ -6,9 +6,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import com.java.ref.anno.Column;
 import com.java.ref.anno.Entity;
 import com.java.ref.anno.Inject;
+import com.java.ref.anno.Repository;
+import com.java.ref.repo.RepositoryFactory;
 
 public class BasicReflection {
 	private static final Logger log = LoggerFactory.getLogger(BasicReflection.class);
@@ -155,7 +160,74 @@ public class BasicReflection {
 				});
 
 	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T createRepository(Class<T> repoInterface) {
+		if(!repoInterface.isInterface()) {
+			throw new IllegalArgumentException("Proxy can be only created by Interface");
+		}
+		if(!repoInterface.isAnnotationPresent(Repository.class)) {
+			throw new IllegalArgumentException("No Repository annotation is present");
+		}
+		
+		final Class<?> entityClass = findClassFromGivenInterface(repoInterface);
 
+		if (entityClass == null) {
+			throw new RuntimeException("Could not determine entity class for repository: " + repoInterface.getName());
+		}
+//		return (T) Proxy.newProxyInstance(
+//				repoInterface.getClassLoader(),
+//				new Class<?>[] {repoInterface},
+//				new RepositoryInvocationHandler(repoInterface,entityClass)
+//				);
+		return (T) Proxy.newProxyInstance(
+					repoInterface.getClassLoader(),
+					new Class<?>[] {repoInterface},
+					new InvocationHandler() {
+						
+						@Override
+						public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+							if ("save".equals(method.getName()) && args != null && args.length == 1) {
+				                Object entity = args[0];
+				                String sql = basicInsertORMbyEntityManager(entity);
+				                log.info("Insert SQL: " + sql);
+				                return true; // should return PK
+				            }
+							 if ("findById".equals(method.getName()) && args != null && args.length == 1) {
+								  Object id = args[0];
+			                        System.out.println("DB query for ID: " + id);
+			                        Object instance = entityClass.getDeclaredConstructor().newInstance();
+			    					Field idField = Arrays.stream(entityClass.getDeclaredFields())
+			    							.filter(f -> f.getName().equals("id"))
+			    							.findFirst()
+			    							.orElseThrow(() -> new RuntimeException("No 'id' field found!!!"));
+			    					idField.setAccessible(true);
+			    					idField.set(instance, id);
+			    					return instance;
+							 }
+				            throw new UnsupportedOperationException("Method " + method.getName() + " is not implemented");							
+						}
+					});
+	}
+	
+	private Class<?> findClassFromGivenInterface(final Class<?> repoInterface) {
+		Type[] genericInterfaces =  repoInterface.getGenericInterfaces();
+		for (Type type : genericInterfaces) {
+			if (type instanceof ParameterizedType) {
+				ParameterizedType pt = (ParameterizedType) type;
+				Type rawType = pt.getRawType();
+				if (rawType instanceof Class && 
+						RepositoryFactory.class.isAssignableFrom((Class<?>) rawType)) {
+					Type[] typeArguments = pt.getActualTypeArguments();
+					if (typeArguments.length >= 1 && typeArguments[0] instanceof Class) {
+						return (Class<?>) typeArguments[0]; // Get the entity type
+					}
+				}
+			}
+		}
+		return null;
+	}	
+	
 	public String basicInsertORMbyEntityManager(Object obj) {
 		List<String> columns = new ArrayList<>();
 		List<String> values = new ArrayList<>();
@@ -185,8 +257,49 @@ public class BasicReflection {
 		return 	"INSERT INTO " + tableName + 
 				"(" + String.join(", ", columns) + 
 				") VALUES (" +  String.join(", ", values) + ");";
-	}
+	}	
+}
 
+class RepositoryInvocationHandler<T> implements InvocationHandler {
 	
+	private static final Logger log = LoggerFactory.getLogger(RepositoryInvocationHandler.class);
 	
+	private final Class<T> repoInterface;
+    private final Class<?> entityClass;
+    	
+    public RepositoryInvocationHandler(Class<T> repoInterface, Class<?> entityClass) {
+        this.repoInterface = repoInterface;
+        this.entityClass = entityClass;
+    }
+    
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if ("save".equals(method.getName()) && args != null && args.length == 1) {
+            Object entity = args[0];
+            BasicReflection basicReflection = new BasicReflection();
+            String sql = basicReflection.basicInsertORMbyEntityManager(entity);
+//            System.out.println("Insert SQL: " + sql);
+            log.info("Insert SQL: " + sql);
+            return true;
+        }
+
+        if ("findById".equals(method.getName()) && args != null && args.length == 1) {
+            Object id = args[0];
+//            System.out.println("DB query for ID: " + id);
+            log.info("Insert SQL: " + "DB query for ID: " + id);
+            Object instance = entityClass.getDeclaredConstructor().newInstance();
+
+            Field idField = Arrays.stream(entityClass.getDeclaredFields())
+                    .filter(f -> f.getName().equals("id"))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No ID field found"));
+
+            idField.setAccessible(true);
+            idField.set(instance, id);
+            return instance;
+        }
+
+        throw new UnsupportedOperationException("Method " + method.getName() + " is not implemented");
+    }
+    
 }

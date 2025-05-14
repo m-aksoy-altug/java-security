@@ -1,6 +1,6 @@
-package com.java.controller;
+package com.java.ref.controller;
 
-import com.java.service.ServiceB;
+import com.java.ref.service.ServiceB;
 
 public class ContollerB {
 	
